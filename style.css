@@ -1,0 +1,160 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: "Roboto Mono", monospace;
+  background: #999;
+}
+
+body {
+  /* display: flex; */
+  min-height: 900px;
+}
+
+main {
+  min-width: 650px;
+  min-height: 890px;
+  margin: 0 auto;
+  border-radius: 3px;
+}
+
+.info {
+  color: #333;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 5px;
+  font-size: 12px;
+  opacity: 0.8;
+  z-index: 3;
+}
+
+.info:hover {
+  opacity: 1;
+}
+
+.info a {
+  color: #333;
+}
+
+#play-button {
+  height: 40px;
+}
+
+#controls {
+  display: flex;
+  flex-direction: column;
+}
+
+.osc {
+  padding: 5px;
+  /* border: 5px solid #222; */
+  position: relative;
+}
+
+.fx {
+  padding: 5px;
+  padding-top: 30px;
+  position: relative;
+  background: #555;
+}
+
+.slider-wrapper {
+  position: relative;
+}
+
+.select-wrapper {
+  display: flex;
+  position: relative;
+  margin-bottom: 3px;
+}
+
+.osc h3 {
+  margin: 0;
+  margin-bottom: 5px;
+  font-size: 1em;
+  color: #222;
+  mix-blend-mode: overlay;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+
+label {
+  color: white;
+  opacity: 0.9;
+  font-size: 0.8em;
+  pointer-events: none;
+}
+
+.slider-wrapper label {
+  position: absolute;
+  top: 1px;
+  left: 5px;
+}
+
+main {
+  display: flex;
+}
+
+/*  ===================================  */
+
+.select-wrapper label {
+  flex-grow: 1;
+  text-align: right;
+  padding-right: 5px;
+  position: relative;
+  top: 1px;
+}
+
+.select-wrapper select {
+  /* width: 100px; */
+  height: 22px;
+  border-radius: 2px;
+  /* box-shadow: 2px 2px 8px #999; */
+  background: white;
+  mix-blend-mode: overlay;
+  color: #222;
+  padding-right: 20px;
+  border: none;
+  outline: none;
+  display: inline-block;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  font-family: "Roboto Mono";
+  text-transform: capitalize;
+}
+.select-wrapper {
+  position: relative;
+}
+.select-wrapper:after {
+  content: ">";
+  font-family: "Roboto Mono";
+  color: rgba(0, 0, 0, 0.5);
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  mix-blend-mode: multiply;
+
+  transform: rotate(90deg);
+  right: 3px;
+  top: 1px;
+  height: "100%";
+  padding: 0;
+  /* border-bottom: 1px solid #ddd; */
+  position: absolute;
+  pointer-events: none;
+}
+.select-wrapper:before {
+  content: "";
+  right: 0;
+  top: 0;
+  width: 18px;
+  height: 100%;
+  mix-blend-mode: overlay;
+  background: rgba(0, 0, 0, 0.2);
+  position: absolute;
+  pointer-events: none;
+  display: block;
+}

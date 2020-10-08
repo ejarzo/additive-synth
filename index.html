@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" type="text/css" href="slider.css" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <title>Additive Synth</title>
+  </head>
+
+  <body>
+    <div class="info">
+      <span
+        >Made by
+        <a href="https://ejarzo.github.io" target="blank"
+          >Elias Jarzombek</a
+        ></span
+      >
+      |
+      <a href="https://github.com/ejarzo/strum-sequencer" target="blank"
+        >GitHub</a
+      >
+    </div>
+    <main>
+      <div>
+        <div id="controls">
+          <button id="play-button" onclick="toggleTransport()">
+            play/stop
+          </button>
+        </div>
+      </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.61/Tone.js"></script>
+    <script src="./teoria.js"></script>
+    <script src="utils.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
