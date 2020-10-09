@@ -301,7 +301,7 @@ const initSynthSliders = () => {
     const oscDiv = $(`<div class="osc osc--${i}" />`);
     oscDiv.append(`<div><h3>Osc ${i + 1}</h3></div>`);
     oscDiv.css({
-      backgroundColor: `hsl(${(i / NUM_OSCS) * 40 - 10}, 50%, 50%)`,
+      backgroundColor: `hsl(${(i / NUM_OSCS) * 60 - 20}, 50%, 50%)`,
     });
 
     SYNTH_DROPDOWNS.forEach(({ label, options, getVal, onChange }) => {
