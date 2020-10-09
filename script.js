@@ -1,8 +1,5 @@
 Tone.context.latencyHint = "playback";
 
-let synth;
-let synth1;
-let synth2;
 let chordIndex = 0;
 let octaveMultiplier = 1;
 let chordNoteIndex = 0;
@@ -14,66 +11,45 @@ const fft = new Tone.FFT();
 
 const autoFilter = new Tone.AutoFilter(1).start();
 const scale = teoria.note("a").scale("major");
-const hpFilter = new Tone.Filter({
-  frequency: 5,
-  type: "highpass",
-});
+const hpFilter = new Tone.Filter({ frequency: 5, type: "highpass" });
 const lpFilter = new Tone.Filter(20000, "lowpass");
 const cheby = new Tone.Chebyshev({ order: 2, wet: 0 });
+
+const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter];
+const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
+  Tone.Destination,
+  fft
+);
+const FX_BUS = new Tone.Gain().chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
+
+const synth = new Synth();
+const synth1 = new Synth();
+const synth2 = new Synth();
+const voices = [synth, synth1, synth2];
+
+// Only look at the first voice for initializing sliders
+const initialOscs = voices[0].getOscs();
+const noiseSynthController = voices[0].getNoiseSynthController();
 
 const SYNTH_DROPDOWNS = [
   {
     label: "Type",
     options: ["sine", "triangle", "square", "sawtooth"],
-    getVal: (synth) => {
-      // console.log(synth.omniOsc.get("type").type);
-      return synth.omniOsc.get("type").type;
-    },
-    onChange: (synth, val) => {
-      synth.omniOsc.set({ type: val });
-      console.log(val);
+    getVal: (oscIndex) => initialOscs[oscIndex].omniOsc.get("type").type,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setOscType(oscIndex, val);
+      });
     },
   },
   {
     label: "Loop",
     options: ["off", "16n", "16t", "32n"],
-    getVal: (synth) => {
-      // console.log(synth.omniOsc.get("type").type);
-      return synth.omniOsc.get("type").type;
-    },
-    onChange: (synth, val) => {
-      if (val === "off") {
-        synth.isLooping = false;
-      } else {
-        synth.loop.set({ interval: val });
-        synth.isLooping = true;
-      }
-    },
-  },
-];
-
-const NOISE_DROPDOWNS = [
-  {
-    label: "Type",
-    options: ["white", "pink", "brown"],
-    getVal: ({ noiseSynth }) => noiseSynth.noise.type,
-    onChange: ({ noiseSynth }, val) => {
-      noiseSynth.noise.set({ type: val });
-    },
-  },
-  {
-    label: "Loop",
-    options: ["off", "16n", "16t", "32n"],
-    getVal: (noiseSynthController) => {
-      return noiseSynthController.loop.get("interval") || "off";
-    },
-    onChange: (noiseSynthController, val) => {
-      if (val === "off") {
-        noiseSynthController.isLooping = false;
-      } else {
-        noiseSynthController.loop.set({ interval: val });
-        noiseSynthController.isLooping = true;
-      }
+    getVal: (oscIndex) => "off",
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setLoop(oscIndex, val);
+      });
     },
   },
 ];
@@ -83,88 +59,80 @@ const SYNTH_SLIDERS = [
     label: "Base",
     min: 0,
     max: 10,
-    getVal: (synth) => synth.harmonic,
-    onChange: (synth, val) => {
-      synth.harmonic = val;
+    getVal: (oscIndex) => initialOscs[oscIndex].harmonic,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setHarmonic(oscIndex, val);
+      });
     },
   },
   {
     label: "Volume",
     min: -24,
     max: 0,
-    getVal: (synth) => {
-      const vol = synth.omniOsc.volume.value;
+    getVal: (oscIndex) => {
+      const vol = initialOscs[oscIndex].omniOsc.volume.value;
       return vol === -Infinity ? -24 : vol;
     },
-    onChange: (synth, val) => {
-      synth.polySynth.volume.value = val === -24 ? -Infinity : val;
-      synth.omniOsc.volume.value = val === -24 ? -Infinity : val;
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setVolume(oscIndex, val);
+      });
     },
   },
   {
     label: "Detune",
     min: -20,
     max: 20,
-    getVal: (synth) => {
-      return synth.omniOsc.detune.value;
-    },
-    // onChange: (synth, val) => synth.osc.set({ detune: val }),
-    onChange: (synth, val) => {
-      synth.polySynth.set({ detune: val });
-      synth.omniOsc.set({ detune: val });
+    getVal: (oscIndex) => initialOscs[oscIndex].omniOsc.detune.value,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setDetune(oscIndex, val);
+      });
     },
   },
   {
     label: "A",
     min: 1,
     max: 200,
-    getVal: (synth) => {
-      // return synth.polySynth.get("envelope").envelope.attack * 100
-      return synth.env.get("attack").attack * 100;
-    },
-    onChange: (synth, val) => {
-      synth.env.attack = val / 100;
-      synth.polySynth.set({ envelope: { attack: val / 100 } });
+    getVal: (oscIndex) => initialOscs[oscIndex].env.attack * 100,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setEnvValue(oscIndex, "attack", val / 100);
+      });
     },
   },
   {
     label: "D",
     min: 1,
     max: 200,
-    getVal: (synth) => {
-      // return synth.osc.get("envelope").envelope.decay * 100;
-      return synth.env.get("decay").decay * 100;
-    },
-    onChange: (synth, val) => {
-      synth.env.decay = val / 100;
-      synth.polySynth.set({ envelope: { decay: val / 100 } });
+    getVal: (oscIndex) => initialOscs[oscIndex].env.decay * 100,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setEnvValue(oscIndex, "decay", val / 100);
+      });
     },
   },
   {
     label: "S",
     min: 1,
     max: 100,
-    getVal: (synth) => {
-      // return synth.polySynth.get("envelope").envelope.sustain * 100
-      return synth.env.get("sustain").sustain * 100;
-    },
-    onChange: (synth, val) => {
-      synth.env.sustain = val / 100;
-      synth.polySynth.set({ envelope: { sustain: val / 100 } });
+    getVal: (oscIndex) => initialOscs[oscIndex].env.sustain * 100,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setEnvValue(oscIndex, "sustain", val / 100);
+      });
     },
   },
   {
     label: "R",
     min: 0,
     max: 200,
-    getVal: (synth) => {
-      // return synth.polySynth.get("envelope").envelope.release * 100
-      return synth.env.get("release").release * 100;
-    },
-    onChange: (synth, val) => {
-      console.log(val);
-      synth.env.release = val / 100;
-      synth.polySynth.set({ envelope: { release: val / 100 } });
+    getVal: (oscIndex) => initialOscs[oscIndex].env.release * 100,
+    onChange: (oscIndex, val) => {
+      voices.forEach((synth) => {
+        synth.setEnvValue(oscIndex, "release", val / 100);
+      });
     },
   },
 ];
@@ -174,48 +142,88 @@ const NOISE_SLIDERS = [
     label: "Volume",
     min: -24,
     max: 0,
-    getVal: (noiseSynth) => {
-      const vol = noiseSynth.volume.value;
+    getVal: () => {
+      const vol = noiseSynthController.noiseSynth.volume.value;
       return vol === -Infinity ? -24 : vol;
     },
-    onChange: (noiseSynth, val) => {
-      noiseSynth.volume.value = val === -24 ? -Infinity : val;
+    onChange: (val) => {
+      voices.forEach((synth) => {
+        synth.setNoiseVolume(val === -24 ? -Infinity : val);
+      });
     },
   },
   {
     label: "A",
     min: 1,
     max: 200,
-    getVal: (noiseSynth) => noiseSynth.envelope.get("attack").attack / 100,
-    onChange: (noiseSynth, val) => {
-      noiseSynth.set({ envelope: { attack: val / 100 } });
+    getVal: () =>
+      noiseSynthController.noiseSynth.envelope.get("attack").attack / 100,
+    onChange: (val) => {
+      voices.forEach((synth) => {
+        synth.setNoiseEnvValue("attack", val / 100);
+      });
     },
   },
   {
     label: "D",
     min: 1,
     max: 200,
-    getVal: (noiseSynth) => noiseSynth.envelope.get("decay").decay / 100,
-    onChange: (noiseSynth, val) => {
-      noiseSynth.set({ envelope: { decay: val / 100 } });
+    getVal: () =>
+      noiseSynthController.noiseSynth.envelope.get("decay").decay / 100,
+    onChange: (val) => {
+      voices.forEach((synth) => {
+        synth.setNoiseEnvValue("decay", val / 100);
+      });
     },
   },
   {
     label: "S",
     min: 1,
     max: 100,
-    getVal: (noiseSynth) => noiseSynth.envelope.get("sustain").sustain / 100,
-    onChange: (noiseSynth, val) => {
-      noiseSynth.set({ envelope: { sustain: val / 100 } });
+    getVal: () =>
+      noiseSynthController.noiseSynth.envelope.get("sustain").sustain / 100,
+    onChange: (val) => {
+      voices.forEach((synth) => {
+        synth.setNoiseEnvValue("sustain", val / 100);
+      });
     },
   },
   {
     label: "R",
     min: 0,
     max: 200,
-    getVal: (noiseSynth) => noiseSynth.envelope.get("release").release / 100,
-    onChange: (noiseSynth, val) => {
-      noiseSynth.set({ envelope: { release: val / 100 } });
+    getVal: () =>
+      noiseSynthController.noiseSynth.envelope.get("release").release / 100,
+    onChange: (val) => {
+      voices.forEach((synth) => {
+        synth.setNoiseEnvValue("release", val / 100);
+      });
+    },
+  },
+];
+
+const NOISE_DROPDOWNS = [
+  {
+    label: "Type",
+    options: ["white", "pink", "brown"],
+    getVal: () => noiseSynthController.noiseSynth.noise.type,
+    onChange: (val) => {
+      noiseSynthController.noiseSynth.noise.set({ type: val });
+    },
+  },
+  {
+    label: "Loop",
+    options: ["off", "16n", "16t", "32n"],
+    getVal: () => {
+      return noiseSynthController.loop.get("interval") || "off";
+    },
+    onChange: (val) => {
+      if (val === "off") {
+        noiseSynthController.isLooping = false;
+      } else {
+        noiseSynthController.loop.set({ interval: val });
+        noiseSynthController.isLooping = true;
+      }
     },
   },
 ];
@@ -253,13 +261,6 @@ const EFFECT_SLIDERS = [
   },
 ];
 
-const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter];
-const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
-  Tone.Destination,
-  fft
-);
-const FX_BUS = new Tone.Gain().chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
-
 const getSlider = ({ min, max, getVal, label, onChange }) => {
   const wrapper = $(`<div class="slider-wrapper" />`);
   const slider = $(
@@ -295,57 +296,11 @@ const getChord = (i) => [
   scale.get(i + 6).fq(),
 ];
 
-function Synth() {
-  this.output = new Tone.Gain().connect(FX_BUS);
-  const noiseSynth = new Tone.NoiseSynth({ volume: -Infinity });
-  this.noiseSynthController = {
-    noiseSynth,
-    isLooping: false,
-    loop: new Tone.Loop((time) => {
-      noiseSynth.triggerAttack(time);
-    }),
-  };
+let voiceIndex = 0;
 
-  this.synths = [...new Array(NUM_OSCS)].map((_, i) => {
-    const polySynth = new Tone.PolySynth({ maxPolyphony: 8 }); // TODO default options?
-    const omniOsc = new Tone.OmniOscillator({
-      type: "triangle",
-      phase: (i / NUM_OSCS) * 360,
-      volume: 0 - i * 2,
-    });
-    const env = new Tone.AmplitudeEnvelope({
-      attack: 0.2,
-      decay: 2,
-      sustain: 1,
-      release: 0,
-    });
-    // polySynth.volume.value = 0 - i * 2;
-    // polySynth.connect(this.output);
-    omniOsc.chain(env);
-
-    const loop = new Tone.Loop((time) => {
-      env.triggerRelease();
-      env.triggerAttack(time);
-    });
-
-    const isLooping = true;
-
-    return { harmonic: i + 1, polySynth, omniOsc, env, loop, isLooping };
-  });
-
-  // connect first to output
-  this.synths[0].env.connect(this.output);
-
-  // connect rest to previous one
-  for (let i = 1; i < this.synths.length; i++) {
-    this.synths[i].env.connect(this.synths[0].env);
-  }
-
-  this.noiseSynthController.noiseSynth.connect(this.synths[0].env);
-
-  const getOscs = () => this.synths;
-
-  this.synths.forEach((synth, i) => {
+const initSynthSliders = () => {
+  console.log(voices[0]);
+  for (let i = 0; i < NUM_OSCS; i++) {
     const oscDiv = $(`<div class="osc osc--${i}" />`);
     oscDiv.append(`<div><h3>Osc ${i + 1}</h3></div>`);
     oscDiv.css({
@@ -356,8 +311,8 @@ function Synth() {
       const select = getDropdown({
         label,
         options,
-        getVal: () => getVal(synth),
-        onChange: (val) => onChange(synth, val),
+        getVal: () => getVal(i),
+        onChange: (val) => onChange(i, val),
       });
       oscDiv.append(select);
     });
@@ -367,16 +322,17 @@ function Synth() {
         label,
         min,
         max,
-        getVal: () => getVal(synth),
-        onChange: (val) => onChange(synth, val),
+        getVal: () => getVal(i),
+        onChange: (val) => onChange(i, val),
       });
       oscDiv.append(slider);
     });
 
     $("#controls").append(oscDiv);
-  });
+  }
+};
 
-  // Add noise div -- TODO refactor
+const initNoiseController = () => {
   const noiseDiv = $(`<div class="osc" />`);
   noiseDiv.append(`<div><h3>Noise</h3></div>`);
   noiseDiv.css({ backgroundColor: `hsl(200, 50%, 50%)` });
@@ -385,8 +341,8 @@ function Synth() {
     const select = getDropdown({
       label,
       options,
-      getVal: () => getVal(this.noiseSynthController),
-      onChange: (val) => onChange(this.noiseSynthController, val),
+      getVal,
+      onChange,
     });
     noiseDiv.append(select);
   });
@@ -396,65 +352,33 @@ function Synth() {
       label,
       min,
       max,
-      getVal: () => getVal(noiseSynth),
-      onChange: (val) => onChange(noiseSynth, val),
+      getVal,
+      onChange,
     });
     noiseDiv.append(slider);
   });
   $("#controls").append(noiseDiv);
+};
 
-  return {
-    triggerAttack: (note, time) => {
-      if (this.noiseSynthController.isLooping) {
-        this.noiseSynthController.loop.cancel();
-        this.noiseSynthController.loop.start();
-      } else {
-        this.noiseSynthController.loop.cancel();
-        // this.noiseSynthController.noiseSynth.triggerRelease(time);
-        this.noiseSynthController.noiseSynth.triggerAttack(time);
-      }
+initSynthSliders();
+initNoiseController();
 
-      getOscs().forEach(({ polySynth, omniOsc, env, harmonic, loop }, i) => {
-        // polySynth.triggerAttackRelease(
-        //   note * (harmonic === 0 ? 0.5 : harmonic),
-        //   dur,
-        //   time
-        // );
-
-        const fq = note * (harmonic === 0 ? 0.5 : harmonic);
-        omniOsc.frequency.value = fq;
-        if (omniOsc.state === "stopped") {
-          omniOsc.start(time);
-        }
-
-        if (isLooping) {
-          loop.cancel();
-          loop.start();
-        } else {
-          loop.cancel();
-          env.triggerAttack(time);
-          // env.triggerRelease(time + dur); // todo look into this
-        }
-      });
-    },
-    triggerRelease: (time) => {
-      getOscs().forEach(({ polySynth, omniOsc, env }, i) => {
-        polySynth.releaseAll(time);
-        env.triggerRelease(time);
-        console.log("stop time", time);
-        omniOsc.stop(time + env.release.value);
-      });
-      this.noiseSynthController.noiseSynth.triggerRelease();
-    },
-  };
-}
+const playVoice = (note, time) => {
+  // const voices = [synth, synth1, synth2];
+  // const prevIndex = voiceIndex;
+  voices[voiceIndex].triggerRelease(note, time);
+  voiceIndex++;
+  voiceIndex = voiceIndex % voices.length;
+  voices[voiceIndex].triggerAttack(note, time);
+};
 
 /* ============== main loop ================  */
 
 Tone.Transport.scheduleRepeat((time) => {
   console.log("schedule time", time);
   const chord = getChord(chordIndex);
-  synth.triggerAttack(chord[chordNoteIndex] * octaveMultiplier, time);
+  // synth.triggerAttack(chord[chordNoteIndex] * octaveMultiplier, time);
+  playVoice(chord[chordNoteIndex] * octaveMultiplier, time);
   // chordNoteIndex++;
   // chordNoteIndex = chordNoteIndex % chord.length;
 
@@ -473,12 +397,14 @@ Tone.Transport.scheduleRepeat((time) => {
   // );
   chordNoteIndex++;
   chordNoteIndex = chordNoteIndex % chord.length;
-}, "1n");
+}, "4n");
 
 function toggleTransport() {
   Tone.Transport.toggle();
   if (Tone.Transport.state === "stopped") {
-    synth.triggerRelease();
+    voices.forEach((synth) => {
+      synth.triggerRelease();
+    });
   }
 }
 
@@ -490,10 +416,6 @@ function setup() {
 
   const effectsDiv = $(`<div class="osc fx" />`);
   effectsDiv.append(`<div><h3>Output</h3></div>`);
-
-  synth = new Synth();
-  // synth1 = new Synth();
-  // synth2 = new Synth();
 
   EFFECT_SLIDERS.forEach(({ label, min, max, getVal, onChange }) => {
     const slider = getSlider({ label, min, max, getVal, onChange });
@@ -524,13 +446,13 @@ function draw() {
     // rect(i, height, 1, -1 * (height - (absV / 185) * height));
   });
   // console.log(sum);
-  const max = Math.max(sum.r, sum.g, sum.b);
+  // const max = Math.max(sum.r, sum.g, sum.b);
   // console.log(sum);
-
+  const maxVal = 90000;
   fill(
-    (sum.r / 90000) * 255,
-    (sum.g / 90000) * 255,
-    (sum.b / 90000) * 255,
+    (sum.r / maxVal) * 255,
+    (sum.g / maxVal) * 255,
+    (sum.b / maxVal) * 255,
     200
   );
 
@@ -543,9 +465,6 @@ function keyPressed() {
     octaveMultiplier = Math.max(octaveMultiplier / 2, 0.25);
   }
   if (key === "x") {
-    octaveMultiplier = Math.min(octaveMultiplier * 2, 4);
-  }
-  if (key === "a") {
     octaveMultiplier = Math.min(octaveMultiplier * 2, 4);
   }
 
@@ -575,5 +494,5 @@ function mouseWheel({ delta }) {
   if (bpm < 20) {
     bpm = 20;
   }
-  Tone.Transport.bpm.value = bpm;
+  // Tone.Transport.bpm.value = bpm;
 }
