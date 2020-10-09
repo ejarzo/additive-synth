@@ -50,6 +50,17 @@ canvas {
   height: 100vh;
 }
 
+.controls-text {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  right: 0;
+  text-align: right;
+  width: 350px;
+  padding: 5px 10px;
+  font-size: 0.8em;
+  color: #eee;
+}
 .osc {
   flex-grow: 1;
   padding: 5px;
