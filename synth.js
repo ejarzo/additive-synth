@@ -25,7 +25,6 @@ function Synth() {
     omniOsc.chain(env);
 
     const loop = new Tone.Loop((time) => {
-      env.triggerRelease();
       env.triggerAttack(time);
     });
 
@@ -53,8 +52,10 @@ function Synth() {
       this.synths[oscIndex].omniOsc.set({ type });
     },
     setLoop: (oscIndex, interval) => {
+      console.log(interval);
       if (interval === "off") {
         this.synths[oscIndex].isLooping = false;
+        this.synths[oscIndex].loop.cancel();
       } else {
         this.synths[oscIndex].loop.set({ interval });
         this.synths[oscIndex].isLooping = true;
@@ -89,7 +90,7 @@ function Synth() {
         this.noiseSynthController.noiseSynth.triggerAttack(time);
       }
 
-      getOscs().forEach(({ omniOsc, env, harmonic, loop }, i) => {
+      getOscs().forEach(({ omniOsc, env, harmonic, loop, isLooping }, i) => {
         const fq = note * (harmonic === 0 ? 0.5 : harmonic);
         omniOsc.frequency.value = fq;
         if (omniOsc.state === "stopped") {
