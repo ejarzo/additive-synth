@@ -337,25 +337,12 @@ const initNoiseController = () => {
   noiseDiv.append(`<div><h3>Noise</h3></div>`);
   noiseDiv.css({ backgroundColor: `hsl(200, 50%, 50%)` });
 
-  NOISE_DROPDOWNS.forEach(({ label, options, getVal, onChange }) => {
-    const select = getDropdown({
-      label,
-      options,
-      getVal,
-      onChange,
-    });
-    noiseDiv.append(select);
+  NOISE_DROPDOWNS.forEach((options) => {
+    noiseDiv.append(getDropdown(options));
   });
 
-  NOISE_SLIDERS.forEach(({ label, min, max, getVal, onChange }) => {
-    const slider = getSlider({
-      label,
-      min,
-      max,
-      getVal,
-      onChange,
-    });
-    noiseDiv.append(slider);
+  NOISE_SLIDERS.forEach((options) => {
+    noiseDiv.append(getSlider(options));
   });
   $("#controls").append(noiseDiv);
 };
@@ -409,7 +396,7 @@ function toggleTransport() {
 }
 
 function setup() {
-  createCanvas(800, 500);
+  createCanvas(window.innerWidth, window.innerHeight);
   pixelDensity(0.1);
   background(200);
   Tone.Transport.bpm.value = 50;
@@ -427,10 +414,9 @@ function setup() {
 function draw() {
   background(200, 100);
   noStroke();
-  // const t = frameCount / 8000;
-  const graph = fft.getValue();
+  const fftData = fft.getValue();
   const sum = { r: 1, g: 1, b: 1 };
-  graph.forEach((value, i) => {
+  fftData.forEach((value, i) => {
     const fq = fft.getFrequencyOfIndex(i);
     const hue = (fq / 24000) * 360;
     const hueInt = parseInt(hue);
@@ -442,12 +428,9 @@ function draw() {
     sum.b += value < -130 ? 0 : (b * absV) / 185;
     // const c = color(`hsl(${parseInt(hueInt)}, 50%, 50%)`);
     // fill(c);
-    // console.log(log(fq));
     // rect(i, height, 1, -1 * (height - (absV / 185) * height));
   });
-  // console.log(sum);
   // const max = Math.max(sum.r, sum.g, sum.b);
-  // console.log(sum);
   const maxVal = 90000;
   fill(
     (sum.r / maxVal) * 255,

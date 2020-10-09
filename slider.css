@@ -21,11 +21,11 @@ input[type="range"] {
  */
 ::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 2px; /* 1 */
+  width: 1px; /* 1 */
   height: 18px;
   background: #fff;
   box-shadow: -100vw 0 0 100vw #444;
-  border: 2px solid #fff; /* 1 */
+  border: 1px solid #fff; /* 1 */
 }
 
 ::-moz-range-track {
