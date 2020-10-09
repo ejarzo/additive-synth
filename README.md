@@ -1,6 +1,6 @@
 # [Additive Synthesizer](https://additive-synth.netlify.app/)
 
-![image](https://user-images.githubusercontent.com/9386882/95627449-3ea83200-0a4a-11eb-9fb7-c41521dbbe1c.png)
+![image](https://user-images.githubusercontent.com/9386882/95627899-005f4280-0a4b-11eb-8279-8bd50ce433ce.png)
 
 This [Additive Synth](https://additive-synth.netlify.app/) is a timbral study. It consists of four oscillators and one noise source each routed to its own amplitude envelope. Oscillator 1 also controls the overall envelope - all other oscillators (including noise) are routed through Oscillator 1.
 
