@@ -9,3 +9,5 @@ I wanted to replicate one of my favorite features of synths like Ableton's [Oper
 I hoped to focus attention primarily on the timbre so I only added limited options for controlling the notes being played. The synth plays a sequence of 7th chord arpeggios in a set scale that can be changed by moving the mouse left and right. You can also change the octave by pressing `Z` and `X`. There are three "voices" meaning that three notes can be played at the same time.
 
 For the visual feedback I mapped the averaged the output's Fourier transform to the color spectrum. This can be seen most easily by filtering out the high frequencies with the low pass filter which causes the color to become darker and redder.
+
+Made with [ToneJS](https://github.com/Tonejs/Tone.js/), [Teoria](https://github.com/saebekassebil/teoria), and [P5](https://github.com/processing/p5.js)
