@@ -6,14 +6,8 @@ body {
   background: #999;
 }
 
-body {
-  /* display: flex; */
-  min-height: 900px;
-}
-
 main {
   min-width: 650px;
-  min-height: 890px;
   margin: 0 auto;
   border-radius: 3px;
 }

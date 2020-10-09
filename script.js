@@ -4,8 +4,11 @@ let chordIndex = 0;
 let octaveMultiplier = 1;
 let chordNoteIndex = 0;
 let destinationGain = 0.3;
+let voiceIndex = 0;
 
 const NUM_OSCS = 4;
+
+/* ================= Create effects chain ================= */
 
 const fft = new Tone.FFT();
 
@@ -22,10 +25,14 @@ const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
 );
 const FX_BUS = new Tone.Gain().chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
 
+/* ================= Create three synth voices ================= */
+
 const synth = new Synth();
 const synth1 = new Synth();
 const synth2 = new Synth();
 const voices = [synth, synth1, synth2];
+
+/* ================= Set up dynamic parameters ================= */
 
 // Only look at the first voice for initializing sliders
 const initialOscs = voices[0].getOscs();
@@ -214,9 +221,7 @@ const NOISE_DROPDOWNS = [
   {
     label: "Loop",
     options: ["off", "16n", "16t", "32n"],
-    getVal: () => {
-      return noiseSynthController.loop.get("interval") || "off";
-    },
+    getVal: () => noiseSynthController.loop.get("interval") || "off",
     onChange: (val) => {
       if (val === "off") {
         noiseSynthController.isLooping = false;
@@ -261,6 +266,8 @@ const EFFECT_SLIDERS = [
   },
 ];
 
+/* ================= DOM helpers ================= */
+
 const getSlider = ({ min, max, getVal, label, onChange }) => {
   const wrapper = $(`<div class="slider-wrapper" />`);
   const slider = $(
@@ -289,17 +296,7 @@ const getDropdown = ({ label, options, getVal, onChange }) => {
   return wrapper;
 };
 
-const getChord = (i) => [
-  scale.get(i).fq(),
-  scale.get(i + 2).fq(),
-  scale.get(i + 4).fq(),
-  scale.get(i + 6).fq(),
-];
-
-let voiceIndex = 0;
-
 const initSynthSliders = () => {
-  console.log(voices[0]);
   for (let i = 0; i < NUM_OSCS; i++) {
     const oscDiv = $(`<div class="osc osc--${i}" />`);
     oscDiv.append(`<div><h3>Osc ${i + 1}</h3></div>`);
@@ -347,8 +344,14 @@ const initNoiseController = () => {
   $("#controls").append(noiseDiv);
 };
 
-initSynthSliders();
-initNoiseController();
+/* ============== Music helpers ================  */
+
+const getChord = (i) => [
+  scale.get(i).fq(),
+  scale.get(i + 2).fq(),
+  scale.get(i + 4).fq(),
+  scale.get(i + 6).fq(),
+];
 
 const playVoice = (note, time) => {
   // const voices = [synth, synth1, synth2];
@@ -362,7 +365,7 @@ const playVoice = (note, time) => {
 /* ============== main loop ================  */
 
 Tone.Transport.scheduleRepeat((time) => {
-  console.log("schedule time", time);
+  // console.log("schedule time", time);
   const chord = getChord(chordIndex);
   // synth.triggerAttack(chord[chordNoteIndex] * octaveMultiplier, time);
   playVoice(chord[chordNoteIndex] * octaveMultiplier, time);
@@ -396,6 +399,9 @@ function toggleTransport() {
 }
 
 function setup() {
+  initSynthSliders();
+  initNoiseController();
+
   createCanvas(window.innerWidth, window.innerHeight);
   pixelDensity(0.1);
   background(200);

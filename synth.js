@@ -19,7 +19,7 @@ function Synth() {
       attack: 0.2,
       decay: 2,
       sustain: 1,
-      release: 0,
+      release: 0.3,
     });
 
     omniOsc.chain(env);
