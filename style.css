@@ -68,6 +68,26 @@ canvas {
   position: relative;
 }
 
+#notes {
+  position: absolute;
+  right: 10px;
+  z-index: 2;
+  top: 80px;
+  color: white;
+}
+
+.controls-text button.isActive {
+  background: #222;
+  color: white;
+}
+
+.controls-text button {
+  cursor: pointer;
+  margin: 0;
+  background: white;
+  border: 1px solid #222;
+}
+
 .fx {
   /* flex-grow: 1; */
   padding: 5px;

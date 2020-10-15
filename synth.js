@@ -25,10 +25,11 @@ function Synth() {
     omniOsc.chain(env);
 
     const loop = new Tone.Loop((time) => {
+      console.log("loop");
       env.triggerAttack(time);
     });
 
-    const isLooping = true;
+    const isLooping = false;
 
     return { harmonic: i + 1, omniOsc, env, loop, isLooping };
   });

@@ -25,10 +25,14 @@
     </div>
     <main>
       <div class="controls-text">
-        <strong>Controls</strong><br />
-        Space bar to play<br />
-        Move mouse left and right to change chords<br />
-        Use Z and X to change octave<br />
+        <!-- <strong>Controls</strong><br />
+        Space bar to play<br /> -->
+        <!-- Move mouse left and right to change chords<br />
+        Use Z and X to change octave<br /> -->
+        <div>
+          <button class="setEqualTemperament isActive" onclick="setEqualTemperament()">Equal Temperament</button>
+          <button class="setJustTuning" onclick="setJustTuning()">Just tuning</button>
+        </div>
       </div>
       <div>
         <div id="controls">
@@ -37,6 +41,7 @@
           </button> -->
         </div>
       </div>
+      <div id="notes"></div>
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js"></script>
