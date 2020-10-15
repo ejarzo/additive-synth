@@ -389,7 +389,9 @@ Tone.Transport.scheduleRepeat((time) => {
   chordNoteIndex = chordNoteIndex % chord.length;
 }, "4n");
 
-function toggleTransport() {
+async function toggleTransport() {
+  // Start audio context
+  await Tone.start();
   Tone.Transport.toggle();
   if (Tone.Transport.state === "stopped") {
     voices.forEach((synth) => {
