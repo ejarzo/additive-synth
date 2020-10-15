@@ -24,14 +24,15 @@ const scale = teoria.note("a").scale("major");
 const hpFilter = new Tone.Filter({ frequency: 5, type: "highpass" });
 const lpFilter = new Tone.Filter(20000, "lowpass");
 const cheby = new Tone.Chebyshev({ order: 2, wet: 0 });
+const limiter = new Tone.Limiter();
 
-const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter];
+const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter, limiter];
 const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
   Tone.Destination,
   analyzer,
   fft
 );
-const FX_BUS = new Tone.Gain().chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
+const FX_BUS = new Tone.Gain(0.2).chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
 
 /* ================= Create three synth voices ================= */
 
@@ -398,6 +399,7 @@ Tone.Transport.scheduleRepeat((time) => {
 }, "4n");
 
 function toggleTransport() {
+  // Start audio context
   Tone.Transport.toggle();
   if (Tone.Transport.state === "stopped") {
     voices.forEach((synth) => {
@@ -510,7 +512,9 @@ function keyPressed() {
 
   // play/pause
   if (key === " ") {
-    toggleTransport();
+    Tone.start().then(() => {
+      toggleTransport();
+    });
   }
 }
 
