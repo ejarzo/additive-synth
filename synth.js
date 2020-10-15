@@ -34,11 +34,11 @@ function Synth() {
   });
 
   // connect first to output
-  this.synths[0].env.connect(this.output);
+  this.synths[0].env.fan(this.output, oscAnalyzers[0]);
 
   // connect rest to previous one
   for (let i = 1; i < this.synths.length; i++) {
-    this.synths[i].env.connect(this.synths[0].env);
+    this.synths[i].env.fan(this.synths[0].env, oscAnalyzers[i]);
   }
 
   this.noiseSynthController.noiseSynth.connect(this.synths[0].env);

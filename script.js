@@ -8,9 +8,16 @@ let voiceIndex = 0;
 
 const NUM_OSCS = 4;
 
+const oscAnalyzers = [
+  new Tone.Waveform(1024),
+  new Tone.Waveform(1024),
+  new Tone.Waveform(1024),
+  new Tone.Waveform(1024),
+];
 /* ================= Create effects chain ================= */
 
 const fft = new Tone.FFT();
+const analyzer = new Tone.Waveform(1024);
 
 const autoFilter = new Tone.AutoFilter(1).start();
 const scale = teoria.note("a").scale("major");
@@ -21,6 +28,7 @@ const cheby = new Tone.Chebyshev({ order: 2, wet: 0 });
 const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter];
 const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
   Tone.Destination,
+  analyzer,
   fft
 );
 const FX_BUS = new Tone.Gain().chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
@@ -403,7 +411,7 @@ function setup() {
   initNoiseController();
 
   createCanvas(window.innerWidth, window.innerHeight);
-  pixelDensity(0.1);
+  // pixelDensity(0.1);
   background(200);
   Tone.Transport.bpm.value = 50;
 
@@ -422,6 +430,7 @@ function draw() {
   noStroke();
   const fftData = fft.getValue();
   const sum = { r: 1, g: 1, b: 1 };
+
   fftData.forEach((value, i) => {
     const fq = fft.getFrequencyOfIndex(i);
     const hue = (fq / 24000) * 360;
@@ -446,6 +455,48 @@ function draw() {
   );
 
   rect(0, 0, width, height);
+
+  let waveform1 = analyzer.getValue();
+  // let waveform2 = analyzer2.getValue();
+
+  push();
+  translate(width / 2, height / 2);
+  strokeWeight(1);
+  noFill();
+  stroke(255);
+  beginShape();
+  console.log(waveform1);
+  let theta = 0;
+  for (let i = 0; i < waveform1.length; i++) {
+    let ampl = map(waveform1[i], -1, 1, 0, width);
+    let y = sin(frameCount) * 500 + 100;
+    const r = Math.sqrt(ampl);
+    vertex((cos(theta) * ampl) / 2, (sin(theta) * ampl) / 2);
+    theta += 360 / waveform1.length;
+  }
+  endShape();
+  pop();
+
+  oscAnalyzers.forEach((analyzer, i) => {
+    push();
+    translate(300, i * 200 + 80);
+    strokeWeight(1);
+    noFill();
+    stroke(255);
+    beginShape();
+    let waveform1 = analyzer.getValue();
+
+    let theta = 0;
+    for (let i = 0; i < waveform1.length; i++) {
+      let ampl = map(waveform1[i], -1, 1, 0, width);
+      let y = sin(frameCount) * 500 + 100;
+      const r = Math.sqrt(ampl);
+      vertex((cos(theta) * ampl) / 10, (sin(theta) * ampl) / 10);
+      theta += 360 / waveform1.length;
+    }
+    endShape();
+    pop();
+  });
 }
 
 function keyPressed() {
