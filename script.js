@@ -342,7 +342,7 @@ const initSynthSliders = () => {
 };
 
 const initNoiseController = () => {
-  const noiseDiv = $(`<div class="osc" />`);
+  const noiseDiv = $(`<div class="osc noise" />`);
   noiseDiv.append(`<div><h3>Noise</h3></div>`);
   noiseDiv.css({ backgroundColor: `hsl(200, 50%, 50%)` });
 
@@ -378,9 +378,9 @@ const playNotes = () => {
   });
 };
 
-const setJustTuning = () => {
+const setJustTemperament = () => {
   isEqualTempered = false;
-  $(".setJustTuning").toggleClass("isActive");
+  $(".setJustTemperament").toggleClass("isActive");
   $(".setEqualTemperament").toggleClass("isActive");
   if (Tone.Transport.state === "started") {
     playNotes();
@@ -389,7 +389,7 @@ const setJustTuning = () => {
 const setEqualTemperament = () => {
   isEqualTempered = true;
   $(".setEqualTemperament").toggleClass("isActive");
-  $(".setJustTuning").toggleClass("isActive");
+  $(".setJustTemperament").toggleClass("isActive");
   if (Tone.Transport.state === "started") {
     playNotes();
   }
@@ -496,7 +496,7 @@ function setup() {
   drawNotes();
 
   createCanvas(window.innerWidth, window.innerHeight);
-  // pixelDensity(0.1);
+  pixelDensity(1);
   background(200);
   Tone.Transport.bpm.value = 50;
 

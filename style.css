@@ -76,6 +76,12 @@ canvas {
   color: white;
 }
 
+/* .controls-text {
+  opacity: 0;
+}
+.controls-text:hover {
+  opacity: 1;
+} */
 .controls-text button.isActive {
   background: #222;
   color: white;
@@ -84,8 +90,12 @@ canvas {
 .controls-text button {
   cursor: pointer;
   margin: 0;
-  background: white;
+  background: #eee;
   border: 1px solid #222;
+  border-color: transparent;
+}
+.controls-text button:hover {
+  border-color: white;
 }
 
 .fx {
@@ -115,6 +125,10 @@ canvas {
   position: absolute;
   top: 5px;
   left: 5px;
+}
+.noise,
+.fx {
+  display: none;
 }
 
 label {
