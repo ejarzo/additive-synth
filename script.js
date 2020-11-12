@@ -19,7 +19,7 @@ const lpFilter = new Tone.Filter(20000, "lowpass");
 const cheby = new Tone.Chebyshev({ order: 2, wet: 0 });
 const limiter = new Tone.Limiter();
 
-const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter, limiter];
+const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter];
 const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
   Tone.Destination,
   fft
