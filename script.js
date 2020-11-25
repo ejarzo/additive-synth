@@ -7,10 +7,19 @@ let destinationGain = 0.3;
 let voiceIndex = 0;
 
 const NUM_OSCS = 4;
+const JUST_RATIOS = [1, 9 / 8, 5 / 4, 4 / 3, 3 / 2, 5 / 3, 15 / 8, 2 / 1];
 
+const SAMPLE_RATE = Math.pow(2, 14);
+const oscAnalyzers = [
+  new Tone.Waveform(SAMPLE_RATE),
+  new Tone.Waveform(SAMPLE_RATE),
+  new Tone.Waveform(SAMPLE_RATE),
+  new Tone.Waveform(SAMPLE_RATE),
+];
 /* ================= Create effects chain ================= */
 
 const fft = new Tone.FFT();
+const analyzer = new Tone.Waveform(SAMPLE_RATE);
 
 const autoFilter = new Tone.AutoFilter(1).start();
 const scale = teoria.note("a").scale("major");
@@ -22,6 +31,7 @@ const limiter = new Tone.Limiter();
 const ACTIVE_EFFECTS = [cheby, hpFilter, lpFilter];
 const DESTINATION_OUTPUT = new Tone.Gain(destinationGain).fan(
   Tone.Destination,
+  analyzer,
   fft
 );
 const FX_BUS = new Tone.Gain(0.2).chain(...ACTIVE_EFFECTS, DESTINATION_OUTPUT);
@@ -32,6 +42,7 @@ const synth = new Synth();
 const synth1 = new Synth();
 const synth2 = new Synth();
 const voices = [synth, synth1, synth2];
+const voiceNotes = [0, 2, 4];
 
 /* ================= Set up dynamic parameters ================= */
 
@@ -331,7 +342,7 @@ const initSynthSliders = () => {
 };
 
 const initNoiseController = () => {
-  const noiseDiv = $(`<div class="osc" />`);
+  const noiseDiv = $(`<div class="osc noise" />`);
   noiseDiv.append(`<div><h3>Noise</h3></div>`);
   noiseDiv.css({ backgroundColor: `hsl(200, 50%, 50%)` });
 
@@ -343,6 +354,82 @@ const initNoiseController = () => {
     noiseDiv.append(getSlider(options));
   });
   $("#controls").append(noiseDiv);
+};
+
+const activeNotes = {};
+
+let voiceCounter = 0;
+const selectedNotes = [-1, -1, -1];
+let isEqualTempered = true;
+
+const playNotes = () => {
+  voices.forEach((voice, voiceI) => {
+    const noteI = selectedNotes[voiceI];
+    if (noteI < 0) return;
+    if (isEqualTempered) {
+      voice.triggerAttack(scale.notes()[noteI].fq(), Tone.now());
+    } else {
+      // Just tuning
+      voice.triggerAttack(
+        scale.notes()[0].fq() * JUST_RATIOS[noteI],
+        Tone.now()
+      );
+    }
+  });
+};
+
+const setJustTemperament = () => {
+  isEqualTempered = false;
+  $(".setJustTemperament").toggleClass("isActive");
+  $(".setEqualTemperament").toggleClass("isActive");
+  if (Tone.Transport.state === "started") {
+    playNotes();
+  }
+};
+const setEqualTemperament = () => {
+  isEqualTempered = true;
+  $(".setEqualTemperament").toggleClass("isActive");
+  $(".setJustTemperament").toggleClass("isActive");
+  if (Tone.Transport.state === "started") {
+    playNotes();
+  }
+};
+
+const drawNotes = () => {
+  const notesDiv = $(`<div class="notes" />`);
+
+  voices.forEach((voice, voiceI) => {
+    const voiceDiv = $(`<div class="voice-${voiceI}" />`);
+    scale.notes().forEach((note, noteI) => {
+      const noteString = note.toString();
+      const btn = $(`<button>${noteString}</button>`);
+
+      btn.on("click", () => {
+        if (Tone.Transport.state === "stopped") {
+          Tone.Transport.start();
+        }
+
+        voice.triggerRelease();
+
+        if (btn.hasClass("isActive")) {
+          selectedNotes[voiceI] = -1;
+          $(`.voice-${voiceI} button`).removeClass("isActive");
+        } else {
+          $(`.voice-${voiceI} button`).removeClass("isActive");
+          // voice.triggerAttack(note.fq());
+          selectedNotes[voiceI] = noteI;
+          btn.addClass("isActive");
+          playNotes();
+        }
+        console.log(selectedNotes);
+      });
+
+      voiceDiv.append(btn);
+    });
+    notesDiv.append(voiceDiv);
+  });
+
+  $(".controls-text").append(notesDiv);
 };
 
 /* ============== Music helpers ================  */
@@ -365,50 +452,59 @@ const playVoice = (note, time) => {
 
 /* ============== main loop ================  */
 
-Tone.Transport.scheduleRepeat((time) => {
-  // console.log("schedule time", time);
-  const chord = getChord(chordIndex);
-  // synth.triggerAttack(chord[chordNoteIndex] * octaveMultiplier, time);
-  playVoice(chord[chordNoteIndex] * octaveMultiplier, time);
-  // chordNoteIndex++;
-  // chordNoteIndex = chordNoteIndex % chord.length;
+// Tone.Transport.scheduleRepeat((time) => {
+//   // console.log("schedule time", time);
+//   const chord = getChord(chordIndex);
+//   // synth.triggerAttack(chord[chordNoteIndex] * octaveMultiplier, time);
+//   // playVoice(chord[chordNoteIndex] * octaveMultiplier, time);
+//   // chordNoteIndex++;
+//   // chordNoteIndex = chordNoteIndex % chord.length;
 
-  // synth1.triggerAttackRelease(
-  //   chord[chordNoteIndex] * octaveMultiplier,
-  //   0.1,
-  //   time
-  // );
-  // chordNoteIndex++;
-  // chordNoteIndex = chordNoteIndex % chord.length;
+//   // synth1.triggerAttackRelease(
+//   //   chord[chordNoteIndex] * octaveMultiplier,
+//   //   0.1,
+//   //   time
+//   // );
+//   // chordNoteIndex++;
+//   // chordNoteIndex = chordNoteIndex % chord.length;
 
-  // synth2.triggerAttackRelease(
-  //   chord[chordNoteIndex] * octaveMultiplier,
-  //   0.1,
-  //   time
-  // );
-  chordNoteIndex++;
-  chordNoteIndex = chordNoteIndex % chord.length;
-}, "4n");
+//   // synth2.triggerAttackRelease(
+//   //   chord[chordNoteIndex] * octaveMultiplier,
+//   //   0.1,
+//   //   time
+//   // );
+//   chordNoteIndex++;
+//   chordNoteIndex = chordNoteIndex % chord.length;
+// }, "4n");
 
 function toggleTransport() {
   // Start audio context
   Tone.Transport.toggle();
   if (Tone.Transport.state === "stopped") {
+    // $(`.notes button`).removeClass("isActive");
     voices.forEach((synth) => {
       synth.triggerRelease();
     });
+  } else {
+    playNotes();
   }
 }
 
 function setup() {
   initSynthSliders();
   initNoiseController();
+  drawNotes();
 
   createCanvas(window.innerWidth, window.innerHeight);
-  pixelDensity(0.1);
+  pixelDensity(1);
   background(200);
   Tone.Transport.bpm.value = 50;
 
+  // playVoice(220);
+  // playVoice(220 * (3 / 2));
+  // playVoice(teoria.note("A3").fq());
+  // playVoice(teoria.note("E4").fq());
+  // playVoice(440 * (1 / 3));
   const effectsDiv = $(`<div class="osc fx" />`);
   effectsDiv.append(`<div><h3>Output</h3></div>`);
 
@@ -424,6 +520,7 @@ function draw() {
   noStroke();
   const fftData = fft.getValue();
   const sum = { r: 1, g: 1, b: 1 };
+
   fftData.forEach((value, i) => {
     const fq = fft.getFrequencyOfIndex(i);
     const hue = (fq / 24000) * 360;
@@ -448,6 +545,59 @@ function draw() {
   );
 
   rect(0, 0, width, height);
+
+  let waveform1 = analyzer.getValue();
+  // let waveform2 = analyzer2.getValue();
+
+  // push();
+  // translate(width / 2, height / 2);
+  // strokeWeight(1);
+  // noFill();
+  // stroke(255);
+  // beginShape();
+  // // console.log(waveform1);
+  // let theta = 0;
+  // for (let i = 0; i < waveform1.length; i++) {
+  //   let ampl = map(waveform1[i], -1, 1, 0, width);
+  //   let y = sin(frameCount) * 500 + 100;
+  //   const r = Math.sqrt(ampl);
+  //   vertex((cos(theta) * ampl) / 2, (sin(theta) * ampl) / 2);
+  //   theta += 360 / waveform1.length;
+  // }
+  // endShape();
+  // pop();
+
+  oscAnalyzers.forEach((analyzer, i) => {
+    push();
+    if (i === 0) {
+      translate(width / 4 + 100, height / 4);
+    }
+    if (i === 1) {
+      translate(width / 4 + 100, height - height / 4);
+    }
+    if (i === 2) {
+      translate(width - width / 4 + 100, height / 4);
+    }
+    if (i === 3) {
+      translate(width - width / 4 + 100, height - height / 4);
+    }
+    strokeWeight(1);
+    noFill();
+    stroke(255);
+    beginShape();
+    let waveform1 = analyzer.getValue();
+
+    let theta = 0;
+    for (let i = 0; i < waveform1.length; i++) {
+      let ampl = map(waveform1[i], -1, 1, 0, width);
+      let y = sin(frameCount) * 500 + 100;
+      const r = Math.sqrt(ampl);
+      vertex((cos(theta) * ampl) / 10, (sin(theta) * ampl) / 10);
+      theta += 360 / waveform1.length;
+    }
+    endShape();
+    pop();
+  });
 }
 
 function keyPressed() {
